@@ -1,4 +1,4 @@
-// clientes.js - VERSIÓN FINAL CORREGIDA
+// clientes.js - VERSIÓN CORREGIDA COMPLETA
 let usuarioActual = null;
 const STORAGE_KEY_USUARIO = 'usuarioMatadero';
 
@@ -49,12 +49,29 @@ mostrarLogin.addEventListener('click', (e) => {
 document.getElementById('registro-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Capturar contraseña y confirmación
+    const password = document.getElementById('reg-password').value.trim();
+    const passwordConfirm = document.getElementById('reg-password-confirm').value.trim();
+
+    // Validar que las contraseñas coincidan
+    if (password !== passwordConfirm) {
+        alert('Las contraseñas no coinciden');
+        return;
+    }
+
+    // Validar longitud mínima de contraseña
+    if (password.length < 6) {
+        alert('La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+
     const datos = {
         nombre: document.getElementById('reg-nombre').value.trim(),
         apellido: document.getElementById('reg-apellido').value.trim(),
         email: document.getElementById('reg-email').value.trim(),
         telefono: document.getElementById('reg-telefono').value.trim(),
-        direccion: document.getElementById('reg-direccion').value.trim()
+        direccion: document.getElementById('reg-direccion').value.trim(),
+        password: password  // ✅ AGREGADO
     };
 
     if (!datos.nombre || !datos.apellido || !datos.email) {
@@ -72,7 +89,14 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
         const data = await res.json();
 
         if (res.ok) {
-            usuarioActual = { ...datos, id: data.cliente_id };
+            usuarioActual = { 
+                id: data.cliente_id,
+                nombre: datos.nombre,
+                apellido: datos.apellido,
+                email: datos.email,
+                telefono: datos.telefono,
+                direccion: datos.direccion
+            };
             actualizarUI();
             modalAuth.style.display = 'none';
             e.target.reset();
@@ -82,7 +106,7 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
         }
     } catch (err) {
         console.error(err);
-        alert('Error: No se pudo conectar al servidor. ¿Flask está corriendo?');
+        alert('Error: No se pudo conectar al servidor.');
     }
 });
 
@@ -91,16 +115,18 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const email = document.getElementById('login-email').value.trim();
-    if (!email) {
-        alert('Ingresa tu email');
+    const password = document.getElementById('login-password').value.trim();
+
+    if (!email || !password) {
+        alert('Ingresa tu email y contraseña');
         return;
     }
 
     try {
-        const res = await fetch('/clientes/registro', {
+        const res = await fetch('/clientes/login', {  // ✅ CORREGIDO: era /clientes/registro
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email, password })
         });
 
         const data = await res.json();
@@ -112,11 +138,11 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             alert('¡Bienvenido de nuevo!');
             e.target.reset();
         } else {
-            alert(data.error || 'Email no encontrado');
+            alert(data.error || 'Email o contraseña incorrectos');
         }
     } catch (err) {
         console.error(err);
-        alert('Error de conexión. Verifica que Flask esté corriendo en el puerto 5000');
+        alert('Error de conexión al servidor');
     }
 });
 

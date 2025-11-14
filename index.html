@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Matadero - Carnicería Artesanal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo">
+                <i class="fas fa-drumstick-bite"></i> El Matadero <i class="fas fa-cut"></i>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="#catalogo">Catálogo</a>
+            <a href="#pedidos">Pedidos</a>
+            <button id="abrir-carrito" class="carrito-btn">
+                <i class="fas fa-shopping-cart"></i> (<span id="contador-carrito">0</span>)
+            </button>
+            <!-- NUEVO: Botón de autenticación -->
+            <button id="btn-auth" class="btn-auth">
+                <i class="fas fa-user"></i> <span id="auth-text">Iniciar Sesión</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- NUEVO: Panel de Usuario -->
+    <div id="panel-usuario" class="panel-usuario" style="display: none;">
+        <div class="panel-content">
+            <h3>Mi Perfil</h3>
+            <div id="info-usuario"></div>
+            <button id="btn-cerrar-sesion" class="btn-logout">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <main id="catalogo" class="container">
+        <h2>Nuestros Mejores Cortes y Preparaciones</h2>
+        <p class="subtitle">Frescura, calidad y el mejor sabor para tu mesa.</p>
+        
+        <div id="productos-container" class="grid-productos">
+        </div>
+            
+    </main>
+
+    <!-- Modal del Carrito (ORIGINAL) -->
+    <div id="modal-carrito" class="modal">
+        <div class="modal-content">
+            <span class="cerrar-modal">&times;</span>
+            <h3>Tu Pedido Actual</h3>
+            
+            <div id="items-carrito" class="carrito-items-list">
+            </div>
+
+            <div class="carrito-footer">
+                <p>Total a Pagar: <span id="total-carrito">$0.000</span></p>
+                <button id="finalizar-compra-btn" class="btn-compra">Finalizar Compra</button>
+                <button id="vaciar-carrito-btn" class="btn-vaciar">Vaciar Carrito</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Modal de Autenticación -->
+    <div id="modal-auth" class="modal">
+        <div class="modal-content">
+            <span class="cerrar-auth">&times;</span>
+            
+            <!-- Formulario de Login -->
+            <div id="form-login" class="auth-form">
+                <h3>Iniciar Sesión</h3>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email:</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Contraseña:</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Ingresar</button>
+                </form>
+                <p class="toggle-form">¿No tienes cuenta? <a href="#" id="mostrar-registro">Regístrate aquí</a></p>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div id="form-registro" class="auth-form" style="display: none;">
+                <h3>Crear Cuenta</h3>
+                <form id="registro-form">
+                    <div class="form-group">
+                        <label for="reg-nombre">Nombre:</label>
+                        <input type="text" id="reg-nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-apellido">Apellido:</label>
+                        <input type="text" id="reg-apellido" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email:</label>
+                        <input type="email" id="reg-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-telefono">Teléfono:</label>
+                        <input type="tel" id="reg-telefono">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-direccion">Dirección:</label>
+                        <textarea id="reg-direccion" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Contraseña:</label>
+                        <input type="password" id="reg-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password-confirm">Confirmar Contraseña:</label>
+                        <input type="password" id="reg-password-confirm" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Registrarse</button>
+                </form>
+                <p class="toggle-form">¿Ya tienes cuenta? <a href="#" id="mostrar-login">Inicia sesión aquí</a></p>
+            </div>
+        </div>
+    </div>
+
+    <section id="pedidos" class="container historial-pedidos">
+        <h2>Historial de Pedidos Guardados</h2>
+        <div id="historial-container" class="grid-historial">
+            <p id="no-pedidos-msg">No hay pedidos guardados en tu historial local.</p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2025 El Matadero | Calidad y Tradición en Carnes. | Consulta por envíos a domicilio.</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <!-- NUEVO: Script de clientes -->
+    <script src="clientes.js"></script>
+</body>
+</html>

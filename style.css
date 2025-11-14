@@ -1,0 +1,600 @@
+/*
+ * Rojo (Carne): #B70909
+ * Amarillo/Mostaza (Calidez): #FFC300
+ * Negro (Elegancia/Parrilla): #2C3E50
+ * Blanco: #FFFFFF
+ */
+
+:root {
+    --color-principal: #B70909;
+    --color-secundario: #FFC300;
+    --color-fondo: #f4f4f4;
+    --color-oscuro: #2C3E50;
+    --sombra-card: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-image: url('img/fondo-madera.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    line-height: 1.6;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+/* ------------------ CABECERA Y LOGO ------------------ */
+.header {
+    background-color: var(--color-oscuro);
+    color: var(--color-fondo);
+    padding: 25px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,.08) 10px, rgba(0,0,0,.08) 20px),
+        linear-gradient(to bottom, #2C3E50, #1a252f);
+}
+
+.logo {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--color-secundario);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.logo i {
+    color: var(--color-principal); 
+    margin: 0 5px;
+}
+
+.nav-menu a, .carrito-btn {
+    color: var(--color-fondo);
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 1.1em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.nav-menu a:hover, .carrito-btn:hover {
+    color: var(--color-secundario);
+}
+
+.carrito-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: var(--color-principal);
+    font-weight: bold;
+}
+
+/* ------------------ TIPOGRAFÍA ------------------ */
+h2 {
+    color: var(--color-principal);
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 2em;
+    background: linear-gradient(135deg, #B70909 0%, #8B0707 50%, #B70909 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.subtitle {
+    text-align: center;
+    color: #ddd;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------ CATÁLOGO (GRID) ------------------ */
+.grid-productos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.producto-card {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--sombra-card);
+    transition: transform 0.3s;
+}
+
+.producto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.producto-card h3 {
+    background-color: var(--color-principal);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    margin-top: 0;
+}
+
+.producto-card p {
+    padding: 0 15px;
+    margin: 5px 0;
+}
+
+.producto-card .precio {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: var(--color-secundario);
+    padding: 10px 15px;
+    display: block;
+    text-align: right;
+}
+
+.producto-card .btn-agregar {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: var(--color-oscuro);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.producto-card .btn-agregar:hover {
+    background-color: var(--color-principal);
+}
+
+/* ------------------ MODAL / CARRITO ------------------ */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.cerrar-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.cerrar-modal:hover,
+.cerrar-modal:focus {
+    color: var(--color-principal);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.carrito-items-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+.carrito-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.carrito-item:first-child { border-top: none; }
+
+.carrito-footer {
+    text-align: right;
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+.btn-compra, .btn-vaciar {
+    padding: 10px 20px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn-compra {
+    background-color: var(--color-principal);
+    color: white;
+}
+
+.btn-compra:hover {
+    background-color: #9c0000;
+}
+
+.btn-vaciar {
+    background-color: #ccc;
+    color: var(--color-oscuro);
+    margin-left: 10px;
+}
+
+/* ------------------ HISTORIAL DE PEDIDOS ------------------ */
+.historial-pedidos {
+    background-color: #fffacd;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: var(--sombra-card);
+}
+
+.grid-historial {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pedido-item {
+    border: 1px solid #ddd;
+    border-left: 5px solid var(--color-secundario);
+    padding: 15px;
+    background-color: #fff9e6;
+    border-radius: 5px;
+}
+
+.pedido-item h4 {
+    color: var(--color-oscuro);
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 5px;
+}
+
+/* ------------------ PIE DE PÁGINA ------------------ */
+.footer {
+    background-color: var(--color-oscuro);
+    color: #aaa;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,.08) 10px, rgba(0,0,0,.08) 20px),
+        linear-gradient(to top, #2C3E50, #1a252f);
+}
+
+/* ------------------ RESPONSIVE (Móviles) ------------------ */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .nav-menu {
+        flex-direction: column;
+        align-items: center;
+    }
+    .nav-menu a, .carrito-btn {
+        margin: 5px 0;
+    }
+    .grid-productos {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ------------------ CATÁLOGO (GRID) - MODIFICACIONES PARA IMÁGENES ------------------ */
+.card-imagen-corte {
+    height: 180px;
+    overflow: hidden;
+}
+
+.card-imagen-corte img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.producto-card:hover .card-imagen-corte img {
+    transform: scale(1.05);
+}
+
+/* ------------------ MODAL / CARRITO - MODIFICACIONES PARA INPUT DE CANTIDAD ------------------ */
+.carrito-nombre {
+    flex-grow: 1;
+    font-weight: 500;
+}
+
+.carrito-cantidad-control {
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+}
+
+.input-cantidad {
+    width: 70px;
+    padding: 5px;
+    text-align: right;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 1em;
+}
+
+.carrito-unidad {
+    margin-left: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.carrito-subtotal {
+    font-weight: bold;
+    color: var(--color-principal);
+    width: 80px;
+    text-align: right;
+}
+
+.carrito-vacio-msg {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* ------------------ HISTORIAL DE PEDIDOS - MEJORA VISUAL ------------------ */
+.pedido-detalle ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    font-size: 0.95em;
+}
+
+.pedido-detalle li {
+    padding: 3px 0;
+    border-bottom: 1px dotted #e0e0e0;
+}
+
+.pedido-detalle strong {
+    display: block;
+    margin-top: 10px;
+    font-size: 1.1em;
+    color: var(--color-principal);
+}
+
+/* ------------------ BOTÓN DE AUTENTICACIÓN ------------------ */
+.btn-auth {
+    border-radius: 5px;
+    background-color: #34495e;
+    font-weight: bold;
+    padding: 8px 15px;
+    color: var(--color-fondo);
+    font-size: 1.1em;
+}
+
+.btn-auth:hover {
+    background-color: var(--color-secundario);
+    color: var(--color-oscuro);
+}
+
+/* ------------------ PANEL DE USUARIO ------------------ */
+.panel-usuario {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    min-width: 300px;
+    z-index: 9;
+}
+
+.panel-usuario .panel-content h3 {
+    color: var(--color-principal);
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--color-secundario);
+    padding-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.panel-usuario p {
+    margin: 8px 0;
+    color: #333;
+    font-size: 0.95em;
+}
+
+.btn-logout {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: var(--color-principal);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    transition: background-color 0.3s;
+    font-size: 1em;
+}
+
+.btn-logout:hover {
+    background-color: #9c0000;
+}
+
+/* ------------------ MODAL DE AUTENTICACIÓN ------------------ */
+.cerrar-auth {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.cerrar-auth:hover,
+.cerrar-auth:focus {
+    color: var(--color-principal);
+    text-decoration: none;
+}
+
+/* ------------------ FORMULARIOS ------------------ */
+.auth-form {
+    padding: 20px 0;
+}
+
+.auth-form h3 {
+    color: var(--color-principal);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--color-oscuro);
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+    transition: border-color 0.3s;
+    font-family: 'Arial', sans-serif;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-secundario);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--color-principal);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-submit:hover {
+    background-color: #9c0000;
+}
+
+.toggle-form {
+    text-align: center;
+    margin-top: 15px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.toggle-form a {
+    color: var(--color-principal);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.toggle-form a:hover {
+    text-decoration: underline;
+}
+
+/* ------------------ ESTADOS DE PEDIDOS ------------------ */
+.estado-pendiente {
+    color: #f39c12;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.estado-completado {
+    color: #27ae60;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.estado-cancelado {
+    color: #e74c3c;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+/* ------------------ RESPONSIVE ADICIONAL ------------------ */
+@media (max-width: 768px) {
+    .panel-usuario {
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        width: calc(100% - 20px);
+        top: 60px;
+    }
+    
+    .btn-auth {
+        padding: 5px 10px;
+        font-size: 0.9em;
+    }
+    
+    .modal-content {
+        padding: 20px;
+    }
+    
+    .auth-form h3 {
+        font-size: 1.3em;
+    }
+}

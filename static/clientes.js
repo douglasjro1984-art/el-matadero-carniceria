@@ -63,7 +63,7 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
     }
 
     try {
-        const res = await fetch('http://127.0.0.1:5000/clientes/registro', {
+        const res = await fetch('/clientes/registro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
@@ -97,7 +97,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     }
 
     try {
-        const res = await fetch('http://127.0.0.1:5000/clientes/login', {
+        const res = await fetch('/clientes/registro', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })

@@ -20,7 +20,7 @@ const productosContainer = document.getElementById('productos-container');
 async function cargarProductosDesdeAPI() {
     try {
         // ⚠️ VERIFICAR URL: Debe coincidir con la dirección donde corre tu servidor Python.
-        const response = await fetch('http://127.0.0.1:5000/productos'); 
+        const response = await fetch('/productos');
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);

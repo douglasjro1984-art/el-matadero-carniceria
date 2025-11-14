@@ -65,16 +65,18 @@ function renderizarProductos() {
         const precioFormateado = `$${precioNumerico.toFixed(3)} / ${producto.unidad}`;
 
         card.innerHTML = `
-            <div class="card-imagen-corte">
-                <img src="${imagenSrc}" alt="${producto.nombre}" onerror="this.onerror=null;this.src='/static/img/default.jpg';"
-            </div>
-            <h3>${producto.nombre}</h3>
-            <p><strong>Corte:</strong> ${producto.corte}</p>
-            <p class="precio">${precioFormateado}</p>
-            <button class="btn-agregar" data-id="${producto.id}">
-                <i class="fas fa-cart-plus"></i> Agregar
-            </button>
-        `;
+    <div class="card-imagen-corte">
+        <img src="/static/img/${producto.id}.jpg" alt="${producto.nombre}" onerror="this.onerror=null;this.src='/static/img/default.jpg';" />
+    </div>
+    <h3>${producto.nombre}</h3>
+    <p><strong>Corte:</strong> ${producto.corte}</p>
+    <p class="precio">${precioFormateado}</p>
+    <button class="btn-agregar" data-id="${producto.id}">
+        <i class="fas fa-cart-plus"></i> Agregar
+    </button>
+`;
+
+
         productosContainer.appendChild(card);
     });
 

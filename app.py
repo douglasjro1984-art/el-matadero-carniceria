@@ -190,7 +190,7 @@ def crear_pedido():
         # Insertar detalles del pedido
         for item in data['items']:
             cursor.execute("""
-                INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario)
+                INSERT INTO detalle_pedidos (pedido_id, producto_id, cantidad, precio_unitario)
                 VALUES (%s, %s, %s, %s)
             """, (pedido_id, item['id'], item['cantidad'], item['precio']))
         

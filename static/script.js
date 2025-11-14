@@ -61,12 +61,12 @@ function renderizarProductos() {
         
         //  CORRECCIÓN 1: Convertir el precio a número para toFixed()
         const precioNumerico = parseFloat(producto.precio);
-        const imagenSrc = `img/${producto.id}.jpg`;
+        const imagenSrc = `/static/img/${producto.id}.jpg`;
         const precioFormateado = `$${precioNumerico.toFixed(3)} / ${producto.unidad}`;
 
         card.innerHTML = `
             <div class="card-imagen-corte">
-                <img src="${imagenSrc}" alt="${producto.nombre}" onerror="this.onerror=null;this.src='img/default.jpg';" />
+                <img src="${imagenSrc}" alt="${producto.nombre}" onerror="this.onerror=null;this.src='/static/img/default.jpg';"
             </div>
             <h3>${producto.nombre}</h3>
             <p><strong>Corte:</strong> ${producto.corte}</p>

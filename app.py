@@ -188,12 +188,16 @@ def crear_pedido():
         
         pedido_id = cursor.lastrowid
         
-        # Insertar detalles del pedido
+        # Insertar detalles del pedido con subtotal
         for item in data['items']:
+            cantidad = float(item['cantidad'])
+            precio = float(item['precio'])
+            subtotal = cantidad * precio
+            
             cursor.execute("""
-                INSERT INTO detalle_pedidos (pedido_id, producto_id, cantidad, precio_unitario)
-                VALUES (%s, %s, %s, %s)
-            """, (pedido_id, item['id'], item['cantidad'], item['precio']))
+                INSERT INTO detalle_pedidos (pedido_id, producto_id, cantidad, precio_unitario, subtotal)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (pedido_id, item['id'], cantidad, precio, subtotal))
         
         connection.commit()
         

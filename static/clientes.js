@@ -141,8 +141,14 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             usuarioActual = data.cliente;
             actualizarUI();
             modalAuth.style.display = 'none';
-            alert('¡Bienvenido de nuevo!');
             e.target.reset();
+            
+            // Mostrar mensaje temporal
+            const mensaje = document.createElement('div');
+            mensaje.style.cssText = 'position:fixed;top:20px;right:20px;background:#28a745;color:white;padding:15px 25px;border-radius:8px;z-index:9999;box-shadow:0 4px 8px rgba(0,0,0,0.3);font-weight:bold;';
+            mensaje.textContent = '¡Bienvenido de nuevo, ' + data.cliente.nombre + '!';
+            document.body.appendChild(mensaje);
+            setTimeout(() => mensaje.remove(), 3000);
         } else {
             alert(data.error || 'Email o contraseña incorrectos');
         }
@@ -174,8 +180,31 @@ function actualizarUI() {
         `;
         panelUsuario.style.display = 'block';
         localStorage.setItem(STORAGE_KEY_USUARIO, JSON.stringify(usuarioActual));
+        
+        // Cerrar panel automáticamente después de 5 segundos
+        setTimeout(() => {
+            panelUsuario.style.display = 'none';
+        }, 5000);
     }
 }
+
+// === EVENTO: Mostrar/ocultar panel al hacer clic en el botón ===
+btnAuth.addEventListener('click', (e) => {
+    if (usuarioActual && !modalAuth.style.display || modalAuth.style.display === 'none') {
+        // Si hay usuario logueado y no está el modal abierto, toggle del panel
+        e.stopPropagation();
+        panelUsuario.style.display = panelUsuario.style.display === 'block' ? 'none' : 'block';
+    }
+});
+
+// === EVENTO: Cerrar panel al hacer clic fuera ===
+document.addEventListener('click', (e) => {
+    if (panelUsuario.style.display === 'block' && 
+        !panelUsuario.contains(e.target) && 
+        !btnAuth.contains(e.target)) {
+        panelUsuario.style.display = 'none';
+    }
+});
 
 // === CARGAR USUARIO AL INICIAR ===
 document.addEventListener('DOMContentLoaded', () => {

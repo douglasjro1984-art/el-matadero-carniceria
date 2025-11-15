@@ -179,11 +179,12 @@ def crear_pedido():
         # Calcular total
         total = sum(float(item['precio']) * float(item['cantidad']) for item in data['items'])
         
-        # Insertar pedido
+        # Insertar pedido con método de pago
+        metodo_pago = data.get('metodo_pago', 'efectivo')
         cursor.execute("""
-            INSERT INTO pedidos (cliente_id, fecha, total, estado)
-            VALUES (%s, %s, %s, %s)
-        """, (data['cliente_id'], datetime.now(), total, 'pendiente'))
+            INSERT INTO pedidos (cliente_id, fecha, total, estado, metodo_pago)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (data['cliente_id'], datetime.now(), total, 'pendiente', metodo_pago))
         
         pedido_id = cursor.lastrowid
         
@@ -241,7 +242,7 @@ def get_pedidos_cliente(cliente_id):
         for pedido in pedidos:
             cursor.execute("""
                 SELECT dp.cantidad, dp.precio_unitario, p.nombre, p.unidad
-                FROM detalle_pedido dp
+                FROM detalle_pedidos dp
                 JOIN productos p ON dp.producto_id = p.id
                 WHERE dp.pedido_id = %s
             """, (pedido['id'],))

@@ -100,7 +100,13 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
             actualizarUI();
             modalAuth.style.display = 'none';
             e.target.reset();
-            alert('¡Registrado con éxito!');
+            
+            // Mostrar mensaje temporal
+            const mensaje = document.createElement('div');
+            mensaje.style.cssText = 'position:fixed;top:20px;right:20px;background:#28a745;color:white;padding:15px 25px;border-radius:8px;z-index:9999;box-shadow:0 4px 8px rgba(0,0,0,0.3);font-weight:bold;';
+            mensaje.textContent = '¡Registrado con éxito!';
+            document.body.appendChild(mensaje);
+            setTimeout(() => mensaje.remove(), 3000);
         } else {
             alert(data.error || 'Error al registrarse');
         }

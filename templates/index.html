@@ -21,14 +21,14 @@
             <button id="abrir-carrito" class="carrito-btn">
                 <i class="fas fa-shopping-cart"></i> (<span id="contador-carrito">0</span>)
             </button>
-            <!-- NUEVO: Botón de autenticación -->
+            <!-- Botón de autenticación -->
             <button id="btn-auth" class="btn-auth">
                 <i class="fas fa-user"></i> <span id="auth-text">Iniciar Sesión</span>
             </button>
         </nav>
     </header>
 
-    <!-- NUEVO: Panel de Usuario -->
+    <!-- Panel de Usuario -->
     <div id="panel-usuario" class="panel-usuario" style="display: none;">
         <div class="panel-content">
             <h3>Mi Perfil</h3>
@@ -46,7 +46,7 @@
             
     </main>
 
-    <!-- Modal del Carrito (ORIGINAL) -->
+    <!-- Modal del Carrito -->
     <div id="modal-carrito" class="modal">
         <div class="modal-content">
             <span class="cerrar-modal">&times;</span>
@@ -63,7 +63,7 @@
         </div>
     </div>
 
-    <!-- NUEVO: Modal de Autenticación -->
+    <!-- Modal de Autenticación -->
     <div id="modal-auth" class="modal">
         <div class="modal-content">
             <span class="cerrar-auth">&times;</span>
@@ -135,8 +135,9 @@
         <p>&copy; 2025 El Matadero | Calidad y Tradición en Carnes. | Consulta por envíos a domicilio.</p>
     </footer>
 
+    <!-- Scripts en orden -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <!-- NUEVO: Script de clientes -->
     <script src="{{ url_for('static', filename='clientes.js') }}"></script>
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
 </body>
 </html>

@@ -188,22 +188,28 @@ function actualizarUI() {
     }
 }
 
-// === EVENTO: Mostrar/ocultar panel al hacer clic en el botón ===
-btnAuth.addEventListener('click', (e) => {
-    if (usuarioActual && !modalAuth.style.display || modalAuth.style.display === 'none') {
-        // Si hay usuario logueado y no está el modal abierto, toggle del panel
-        e.stopPropagation();
-        panelUsuario.style.display = panelUsuario.style.display === 'block' ? 'none' : 'block';
-    }
-});
-
-// === EVENTO: Cerrar panel al hacer clic fuera ===
-document.addEventListener('click', (e) => {
-    if (panelUsuario.style.display === 'block' && 
-        !panelUsuario.contains(e.target) && 
-        !btnAuth.contains(e.target)) {
-        panelUsuario.style.display = 'none';
-    }
+// === CORREGIDO: Evento para mostrar/ocultar panel ===
+document.addEventListener('DOMContentLoaded', () => {
+    // Toggle panel al hacer clic en el botón de usuario
+    btnAuth.addEventListener('click', (e) => {
+        if (usuarioActual) {
+            e.stopPropagation();
+            if (panelUsuario.style.display === 'block') {
+                panelUsuario.style.display = 'none';
+            } else {
+                panelUsuario.style.display = 'block';
+            }
+        }
+    });
+    
+    // Cerrar panel al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (panelUsuario.style.display === 'block' && 
+            !panelUsuario.contains(e.target) && 
+            !btnAuth.contains(e.target)) {
+            panelUsuario.style.display = 'none';
+        }
+    });
 });
 
 // === CARGAR USUARIO AL INICIAR ===

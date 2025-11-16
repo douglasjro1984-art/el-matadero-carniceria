@@ -75,7 +75,7 @@ INSERT INTO `productos` VALUES
 (10,'Cuadril','Corte magro premium',15.500,'kg'),
 (11,'Milanesas de Ternera','Rebozadas artesanalmente',9.200,'kg'),
 (12,'Chorizo Parrillero','Chorizo criollo casero',6.800,'kg'),
-(13,'Osobuco','Con tuétano',7.500,'kg');
+(13,'Osobuco','Con tuétano',7.500,'kg'),
 (14,'Molida,vacuno','Especial',14.000,'kg');
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 UNLOCK TABLES;

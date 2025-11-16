@@ -288,7 +288,7 @@ function preguntarMetodoPago() {
     });
 }
 
-// NUEVA FUNCIÓN: Generar ticket de venta
+//  Generar ticket de venta
 function generarTicket(datos) {
     const ticket = document.createElement('div');
     ticket.style.cssText = `

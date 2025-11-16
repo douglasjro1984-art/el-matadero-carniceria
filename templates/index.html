@@ -3,153 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Matadero - Carnicería Artesanal</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <title>Panel de Administración - El Matadero</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        .card-stat {
+            border-left: 4px solid #667eea;
+        }
+    </style>
 </head>
 <body>
-
-    <header class="header">
-        <div class="logo-container">
-            <div class="logo">
-                <i class="fas fa-drumstick-bite"></i> El Matadero <i class="fas fa-cut"></i>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- SIDEBAR -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-3 text-white">
+                    <h4><i class="fas fa-store"></i> El Matadero</h4>
+                    <p class="mb-0"><small id="adminNombre">Admin</small></p>
+                    <span class="badge bg-light text-dark" id="adminRol">admin</span>
+                </div>
+                <nav class="nav flex-column p-2">
+                    <a class="nav-link" href="#" id="btnGestionPedidos">
+                        <i class="fas fa-shopping-cart"></i> Gestión de Pedidos
+                    </a>
+                    <a class="nav-link" href="#" id="btnGestionProductos">
+                        <i class="fas fa-box"></i> Gestión de Productos
+                    </a>
+                    <a class="nav-link" href="#" id="btnHistorial">
+                        <i class="fas fa-history"></i> Historial Completo
+                    </a>
+                    <a class="nav-link" href="#" id="btnCierreCaja">
+                        <i class="fas fa-cash-register"></i> Cierre de Caja
+                    </a>
+                    <a class="nav-link" href="#" id="btnReportes">
+                        <i class="fas fa-chart-bar"></i> Reportes
+                    </a>
+                    <hr class="text-white">
+                    <a class="nav-link text-danger" href="#" id="btnCerrarSesion">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </nav>
             </div>
-        </div>
-        <nav class="nav-menu">
-            <a href="#catalogo">Catálogo</a>
-            <a href="#pedidos">Pedidos</a>
-            <button id="abrir-carrito" class="carrito-btn">
-                <i class="fas fa-shopping-cart"></i> (<span id="contador-carrito">0</span>)
-            </button>
-            <!-- Botón Panel Admin (solo visible para admin/empleado) -->
-            <button id="btn-panel-header" class="btn-auth" style="display: none; background: var(--color-secundario); color: var(--color-oscuro);">
-                <i class="fas fa-cog"></i> <span id="panel-text">Panel</span>
-            </button>
-            <!-- Botón de autenticación -->
-            <button id="btn-auth" class="btn-auth">
-                <i class="fas fa-user"></i> <span id="auth-text">Iniciar Sesión</span>
-            </button>
-        </nav>
-    </header>
 
-    <!-- Panel de Usuario -->
-    <div id="panel-usuario" class="panel-usuario" style="display: none;">
-        <div class="panel-content">
-            <h3>Mi Perfil</h3>
-            <div id="info-usuario"></div>
-            <button id="btn-cerrar-sesion" class="btn-logout">Cerrar Sesión</button>
+            <!-- CONTENIDO PRINCIPAL -->
+            <div class="col-md-10 p-4">
+                <!-- SECCIÓN: GESTIÓN DE PEDIDOS -->
+                <div id="seccionPedidos" class="seccion-admin">
+                    <h2>📦 Gestión de Pedidos</h2>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <select id="filtroEstado" class="form-select">
+                                <option value="todos">Todos los estados</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="completado">Completado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filtroMetodo" class="form-select">
+                                <option value="todos">Todos los métodos</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" id="buscarPedido" class="form-control" placeholder="Buscar por cliente, email o ID...">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Método</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaPedidos"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: PRODUCTOS -->
+                <div id="seccionProductos" class="seccion-admin d-none">
+                    <h2>📦 Gestión de Productos</h2>
+                    <p class="text-muted">Aquí puedes agregar la gestión de productos...</p>
+                </div>
+
+                <!-- SECCIÓN: HISTORIAL COMPLETO -->
+                <div id="seccionHistorial" class="seccion-admin d-none">
+                    <h2>📋 Historial Completo de Pedidos</h2>
+                    <div class="alert alert-info">
+                        Total de registros: <strong id="totalHistorial">0</strong>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Método</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaHistorial"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: CIERRE DE CAJA -->
+                <div id="seccionCierreCaja" class="seccion-admin d-none">
+                    <h2>💰 Cierre de Caja</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning">
+                            <h5>Realizar Cierre de Caja</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha del Cierre</label>
+                                    <input type="date" id="fechaCierre" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Observaciones (opcional)</label>
+                                    <textarea id="observacionesCierre" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <button onclick="realizarCierreCaja()" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Realizar Cierre
+                            </button>
+                        </div>
+                    </div>
+
+                    <h4>Historial de Cierres</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th>Efectivo</th>
+                                    <th>Tarjeta</th>
+                                    <th>Transferencia</th>
+                                    <th>Total General</th>
+                                    <th>Pedidos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCierres"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: REPORTES -->
+                <div id="seccionReportes" class="seccion-admin d-none">
+                    <h2>📊 Reportes y Estadísticas</h2>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5>Reporte Diario</h5>
+                                </div>
+                                <div class="card-body">
+                                    <label class="form-label">Fecha</label>
+                                    <input type="date" id="fechaReporte" class="form-control mb-3">
+                                    <button onclick="generarReporteDiario()" class="btn btn-primary">
+                                        <i class="fas fa-file-alt"></i> Generar Reporte Diario
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5>Reporte por Rango</h5>
+                                </div>
+                                <div class="card-body">
+                                    <label class="form-label">Desde</label>
+                                    <input type="date" id="fechaDesde" class="form-control mb-2">
+                                    <label class="form-label">Hasta</label>
+                                    <input type="date" id="fechaHasta" class="form-control mb-3">
+                                    <button onclick="generarReporteRango()" class="btn btn-success">
+                                        <i class="fas fa-chart-line"></i> Generar Reporte por Rango
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="resultadoReporte"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <main id="catalogo" class="container">
-        <h2>Nuestros Mejores Cortes y Preparaciones</h2>
-        <p class="subtitle">Frescura, calidad y el mejor sabor para tu mesa.</p>
-        
-        <div id="productos-container" class="grid-productos">
-        </div>
-            
-    </main>
-
-    <!-- Modal del Carrito -->
-    <div id="modal-carrito" class="modal">
-        <div class="modal-content">
-            <span class="cerrar-modal">&times;</span>
-            <h3>Tu Pedido Actual</h3>
-            
-            <div id="items-carrito" class="carrito-items-list">
-            </div>
-
-            <div class="carrito-footer">
-                <p>Total a Pagar: <span id="total-carrito">$0.000</span></p>
-                <button id="finalizar-compra-btn" class="btn-compra">Finalizar Compra</button>
-                <button id="vaciar-carrito-btn" class="btn-vaciar">Vaciar Carrito</button>
+    <!-- MODAL: DETALLE PEDIDO -->
+    <div class="modal fade" id="modalDetalle" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalle del Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalDetalleContenido"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Autenticación -->
-    <div id="modal-auth" class="modal">
-        <div class="modal-content">
-            <span class="cerrar-auth">&times;</span>
-            
-            <!-- Formulario de Login -->
-            <div id="form-login" class="auth-form">
-                <h3>Iniciar Sesión</h3>
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-tipo">Tipo de Usuario:</label>
-                        <select id="login-tipo" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em;">
-                            <option value="cliente">👤 Cliente</option>
-                            <option value="empleado">👔 Empleado</option>
-                            <option value="admin">🔑 Administrador</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-email">Email:</label>
-                        <input type="email" id="login-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Contraseña:</label>
-                        <input type="password" id="login-password" required>
-                    </div>
-                    <button type="submit" class="btn-submit">Ingresar</button>
-                </form>
-                <p class="toggle-form">¿No tienes cuenta? <a href="#" id="mostrar-registro">Regístrate aquí</a></p>
-            </div>
-
-            <!-- Formulario de Registro -->
-            <div id="form-registro" class="auth-form" style="display: none;">
-                <h3>Crear Cuenta</h3>
-                <form id="registro-form">
-                    <div class="form-group">
-                        <label for="reg-nombre">Nombre:</label>
-                        <input type="text" id="reg-nombre" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-apellido">Apellido:</label>
-                        <input type="text" id="reg-apellido" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-email">Email:</label>
-                        <input type="email" id="reg-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-telefono">Teléfono:</label>
-                        <input type="tel" id="reg-telefono">
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-direccion">Dirección:</label>
-                        <textarea id="reg-direccion" rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-password">Contraseña:</label>
-                        <input type="password" id="reg-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-password-confirm">Confirmar Contraseña:</label>
-                        <input type="password" id="reg-password-confirm" required>
-                    </div>
-                    <button type="submit" class="btn-submit">Registrarse</button>
-                </form>
-                <p class="toggle-form">¿Ya tienes cuenta? <a href="#" id="mostrar-login">Inicia sesión aquí</a></p>
-            </div>
-        </div>
-    </div>
-
-    <section id="pedidos" class="container historial-pedidos">
-        <h2>Historial de Pedidos Guardados</h2>
-        <div id="historial-container" class="grid-historial">
-            <p id="no-pedidos-msg">No hay pedidos guardados en tu historial local.</p>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <p>&copy; 2025 El Matadero | Calidad y Tradición en Carnes. | Consulta por envíos a domicilio.</p>
-    </footer>
-
-    <!-- Scripts en orden -->
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='clientes.js') }}"></script>
-    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>

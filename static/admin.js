@@ -1,457 +1,677 @@
-// admin.js - Panel de Administración
+// ============================================
+// CONFIGURACIÓN Y ESTADO GLOBAL
+// ============================================
 
-// === FUNCIÓN PRINCIPAL: Mostrar Panel Admin ===
-function mostrarPanelAdmin() {
-    if (!usuarioActual || (usuarioActual.rol !== 'admin' && usuarioActual.rol !== 'empleado')) {
-        alert('No tienes permisos para acceder al panel de administración');
+const API_URL = 'http://localhost:5000';
+let adminActual = null;
+let pedidosActuales = [];
+let historialCompleto = [];
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    verificarAutenticacion();
+    cargarPedidos();
+    configurarEventos();
+});
+
+function verificarAutenticacion() {
+    const clienteGuardado = localStorage.getItem('cliente');
+    
+    if (!clienteGuardado) {
+        window.location.href = 'login.html';
         return;
     }
     
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.id = 'modal-admin';
+    adminActual = JSON.parse(clienteGuardado);
     
-    const esAdmin = usuarioActual.rol === 'admin';
+    if (adminActual.rol !== 'admin' && adminActual.rol !== 'empleado') {
+        alert('Acceso denegado. Solo administradores y empleados pueden acceder.');
+        window.location.href = 'index.html';
+        return;
+    }
     
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
-            <span class="cerrar-modal" onclick="cerrarPanelAdmin()">&times;</span>
-            <h2 style="color: var(--color-principal); text-align: center;">
-                🔧 Panel de Administración - ${usuarioActual.nombre}
-            </h2>
-            
-            <div style="display: flex; gap: 10px; margin: 20px 0; justify-content: center; flex-wrap: wrap;">
-                ${esAdmin ? '<button onclick="verProductos()" class="btn-compra">📦 Gestionar Productos</button>' : ''}
-                <button onclick="verTodosPedidos()" class="btn-compra">📋 Ver Todos los Pedidos</button>
-                <button onclick="cerrarPanelAdmin()" class="btn-vaciar">Cerrar</button>
+    document.getElementById('adminNombre').textContent = 
+        `${adminActual.nombre} ${adminActual.apellido || ''}`;
+    document.getElementById('adminRol').textContent = adminActual.rol;
+}
+
+function configurarEventos() {
+    // Botones del menú principal
+    document.getElementById('btnGestionPedidos').addEventListener('click', mostrarSeccionPedidos);
+    document.getElementById('btnGestionProductos').addEventListener('click', mostrarSeccionProductos);
+    document.getElementById('btnHistorial').addEventListener('click', mostrarHistorialCompleto);
+    document.getElementById('btnCierreCaja').addEventListener('click', mostrarCierreCaja);
+    document.getElementById('btnReportes').addEventListener('click', mostrarReportes);
+    document.getElementById('btnCerrarSesion').addEventListener('click', cerrarSesion);
+    
+    // Filtros de pedidos
+    document.getElementById('filtroEstado').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroMetodo').addEventListener('change', aplicarFiltros);
+    document.getElementById('buscarPedido').addEventListener('input', aplicarFiltros);
+}
+
+// ============================================
+// GESTIÓN DE PEDIDOS
+// ============================================
+
+async function cargarPedidos() {
+    try {
+        const response = await fetch(`${API_URL}/admin/pedidos`);
+        const pedidos = await response.json();
+        
+        pedidosActuales = pedidos;
+        mostrarPedidos(pedidos);
+    } catch (error) {
+        console.error('Error al cargar pedidos:', error);
+        alert('Error al cargar los pedidos');
+    }
+}
+
+function mostrarPedidos(pedidos) {
+    const tbody = document.getElementById('tablaPedidos');
+    tbody.innerHTML = '';
+    
+    if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pedidos</td></tr>';
+        return;
+    }
+    
+    pedidos.forEach(pedido => {
+        const fecha = new Date(pedido.fecha).toLocaleString('es-AR');
+        const estadoBadge = obtenerBadgeEstado(pedido.estado);
+        const metodoBadge = obtenerBadgeMetodo(pedido.metodo_pago);
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${pedido.id}</td>
+            <td>${fecha}</td>
+            <td>${pedido.nombre} ${pedido.apellido || ''}</td>
+            <td>$${parseFloat(pedido.total).toFixed(2)}</td>
+            <td>${estadoBadge}</td>
+            <td>${metodoBadge}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="verDetallePedido(${pedido.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="editarPedido(${pedido.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="cancelarPedidoConfirm(${pedido.id})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function obtenerBadgeEstado(estado) {
+    const badges = {
+        'pendiente': '<span class="badge bg-warning">Pendiente</span>',
+        'completado': '<span class="badge bg-success">Completado</span>',
+        'cancelado': '<span class="badge bg-danger">Cancelado</span>'
+    };
+    return badges[estado] || '<span class="badge bg-secondary">Desconocido</span>';
+}
+
+function obtenerBadgeMetodo(metodo) {
+    const badges = {
+        'efectivo': '<span class="badge bg-success">💵 Efectivo</span>',
+        'tarjeta': '<span class="badge bg-primary">💳 Tarjeta</span>',
+        'transferencia': '<span class="badge bg-info">🏦 Transferencia</span>'
+    };
+    return badges[metodo] || '<span class="badge bg-secondary">N/A</span>';
+}
+
+function aplicarFiltros() {
+    const estadoFiltro = document.getElementById('filtroEstado').value;
+    const metodoFiltro = document.getElementById('filtroMetodo').value;
+    const busqueda = document.getElementById('buscarPedido').value.toLowerCase();
+    
+    let pedidosFiltrados = [...pedidosActuales];
+    
+    if (estadoFiltro !== 'todos') {
+        pedidosFiltrados = pedidosFiltrados.filter(p => p.estado === estadoFiltro);
+    }
+    
+    if (metodoFiltro !== 'todos') {
+        pedidosFiltrados = pedidosFiltrados.filter(p => p.metodo_pago === metodoFiltro);
+    }
+    
+    if (busqueda) {
+        pedidosFiltrados = pedidosFiltrados.filter(p => 
+            p.nombre.toLowerCase().includes(busqueda) ||
+            p.apellido?.toLowerCase().includes(busqueda) ||
+            p.email.toLowerCase().includes(busqueda) ||
+            p.id.toString().includes(busqueda)
+        );
+    }
+    
+    mostrarPedidos(pedidosFiltrados);
+}
+
+function verDetallePedido(pedidoId) {
+    const pedido = pedidosActuales.find(p => p.id === pedidoId);
+    if (!pedido) return;
+    
+    let itemsHTML = '<table class="table table-sm"><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+    
+    pedido.items.forEach(item => {
+        itemsHTML += `
+            <tr>
+                <td>${item.nombre}</td>
+                <td>${item.cantidad} ${item.unidad}</td>
+                <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
+                <td>$${parseFloat(item.subtotal).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    itemsHTML += '</tbody></table>';
+    
+    const modalContent = `
+        <p><strong>Pedido #${pedido.id}</strong></p>
+        <p><strong>Cliente:</strong> ${pedido.nombre} ${pedido.apellido || ''}</p>
+        <p><strong>Email:</strong> ${pedido.email}</p>
+        <p><strong>Teléfono:</strong> ${pedido.telefono || 'N/A'}</p>
+        <p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString('es-AR')}</p>
+        <p><strong>Estado:</strong> ${pedido.estado}</p>
+        <p><strong>Método de Pago:</strong> ${pedido.metodo_pago}</p>
+        ${pedido.editado ? `<p class="text-warning"><small>⚠️ Editado el ${new Date(pedido.fecha_edicion).toLocaleString('es-AR')}</small></p>` : ''}
+        <hr>
+        <h6>Productos:</h6>
+        ${itemsHTML}
+        <h5 class="text-end">Total: $${parseFloat(pedido.total).toFixed(2)}</h5>
+    `;
+    
+    document.getElementById('modalDetalleContenido').innerHTML = modalContent;
+    new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+}
+
+async function editarPedido(pedidoId) {
+    const pedido = pedidosActuales.find(p => p.id === pedidoId);
+    if (!pedido) return;
+    
+    const nuevoEstado = prompt(
+        `Estado actual: ${pedido.estado}\n\nNuevo estado (pendiente/completado/cancelado):`,
+        pedido.estado
+    );
+    
+    if (!nuevoEstado || nuevoEstado === pedido.estado) return;
+    
+    if (!['pendiente', 'completado', 'cancelado'].includes(nuevoEstado)) {
+        alert('Estado inválido');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/pedidos/${pedidoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                estado: nuevoEstado,
+                editado_por: adminActual.id
+            })
+        });
+        
+        if (response.ok) {
+            alert('Pedido actualizado exitosamente');
+            cargarPedidos();
+        } else {
+            alert('Error al actualizar pedido');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al actualizar pedido');
+    }
+}
+
+async function cancelarPedidoConfirm(pedidoId) {
+    if (!confirm('¿Está seguro de cancelar este pedido?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/pedidos/${pedidoId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('Pedido cancelado exitosamente');
+            cargarPedidos();
+        } else {
+            alert('Error al cancelar pedido');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al cancelar pedido');
+    }
+}
+
+// ============================================
+// HISTORIAL COMPLETO
+// ============================================
+
+async function mostrarHistorialCompleto() {
+    mostrarSeccion('seccionHistorial');
+    
+    try {
+        const response = await fetch(`${API_URL}/pedidos/historial`);
+        historialCompleto = await response.json();
+        
+        renderizarHistorial(historialCompleto);
+    } catch (error) {
+        console.error('Error al cargar historial:', error);
+        alert('Error al cargar el historial completo');
+    }
+}
+
+function renderizarHistorial(pedidos) {
+    const tbody = document.getElementById('tablaHistorial');
+    tbody.innerHTML = '';
+    
+    if (pedidos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay registros</td></tr>';
+        return;
+    }
+    
+    pedidos.forEach(pedido => {
+        const fecha = new Date(pedido.fecha).toLocaleString('es-AR');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${pedido.id}</td>
+            <td>${fecha}</td>
+            <td>${pedido.cliente_nombre} ${pedido.cliente_apellido || ''}</td>
+            <td>$${parseFloat(pedido.total).toFixed(2)}</td>
+            <td>${obtenerBadgeEstado(pedido.estado)}</td>
+            <td>${obtenerBadgeMetodo(pedido.metodo_pago)}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="verDetalleHistorial(${pedido.id})">
+                    <i class="fas fa-eye"></i> Ver
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    document.getElementById('totalHistorial').textContent = pedidos.length;
+}
+
+function verDetalleHistorial(pedidoId) {
+    const pedido = historialCompleto.find(p => p.id === pedidoId);
+    if (!pedido) return;
+    
+    let itemsHTML = '<table class="table table-sm"><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+    
+    pedido.items.forEach(item => {
+        itemsHTML += `
+            <tr>
+                <td>${item.nombre}</td>
+                <td>${item.cantidad} ${item.unidad}</td>
+                <td>$${parseFloat(item.precio_unitario).toFixed(2)}</td>
+                <td>$${parseFloat(item.subtotal).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    itemsHTML += '</tbody></table>';
+    
+    const modalContent = `
+        <p><strong>Pedido #${pedido.id}</strong></p>
+        <p><strong>Cliente:</strong> ${pedido.cliente_nombre} ${pedido.cliente_apellido || ''}</p>
+        <p><strong>Email:</strong> ${pedido.email}</p>
+        <p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString('es-AR')}</p>
+        <p><strong>Estado:</strong> ${pedido.estado}</p>
+        <p><strong>Método de Pago:</strong> ${pedido.metodo_pago}</p>
+        <hr>
+        ${itemsHTML}
+        <h5 class="text-end">Total: $${parseFloat(pedido.total).toFixed(2)}</h5>
+    `;
+    
+    document.getElementById('modalDetalleContenido').innerHTML = modalContent;
+    new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+}
+
+// ============================================
+// CIERRE DE CAJA
+// ============================================
+
+async function mostrarCierreCaja() {
+    mostrarSeccion('seccionCierreCaja');
+    
+    // Establecer fecha de hoy por defecto
+    document.getElementById('fechaCierre').valueAsDate = new Date();
+    
+    // Cargar historial de cierres
+    await cargarHistorialCierres();
+}
+
+async function cargarHistorialCierres() {
+    try {
+        const response = await fetch(`${API_URL}/admin/cierres`);
+        const cierres = await response.json();
+        
+        const tbody = document.getElementById('tablaCierres');
+        tbody.innerHTML = '';
+        
+        if (cierres.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay cierres registrados</td></tr>';
+            return;
+        }
+        
+        cierres.forEach(cierre => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${cierre.fecha}</td>
+                <td>${cierre.usuario_nombre || 'N/A'}</td>
+                <td>$${parseFloat(cierre.total_efectivo).toFixed(2)}</td>
+                <td>$${parseFloat(cierre.total_tarjeta).toFixed(2)}</td>
+                <td>$${parseFloat(cierre.total_transferencia).toFixed(2)}</td>
+                <td><strong>$${parseFloat(cierre.total_general).toFixed(2)}</strong></td>
+                <td>${cierre.cantidad_pedidos}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error al cargar cierres:', error);
+    }
+}
+
+async function realizarCierreCaja() {
+    const fecha = document.getElementById('fechaCierre').value;
+    const observaciones = document.getElementById('observacionesCierre').value;
+    
+    if (!fecha) {
+        alert('Debe seleccionar una fecha');
+        return;
+    }
+    
+    if (!confirm(`¿Confirma realizar el cierre de caja para el ${fecha}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/cierre-caja`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fecha: fecha,
+                usuario_id: adminActual.id,
+                observaciones: observaciones
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert(`✅ Cierre realizado exitosamente!\n\nTotal: $${parseFloat(data.totales.total_general).toFixed(2)}\nPedidos: ${data.totales.cantidad_pedidos}`);
+            document.getElementById('observacionesCierre').value = '';
+            cargarHistorialCierres();
+        } else {
+            alert(`❌ Error: ${data.error}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al realizar cierre de caja');
+    }
+}
+
+// ============================================
+// REPORTES
+// ============================================
+
+async function mostrarReportes() {
+    mostrarSeccion('seccionReportes');
+    
+    // Establecer fechas por defecto
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaReporte').value = hoy;
+    document.getElementById('fechaDesde').value = hoy;
+    document.getElementById('fechaHasta').value = hoy;
+}
+
+async function generarReporteDiario() {
+    const fecha = document.getElementById('fechaReporte').value;
+    
+    if (!fecha) {
+        alert('Debe seleccionar una fecha');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/reportes/diario?fecha=${fecha}`);
+        const reporte = await response.json();
+        
+        mostrarReporteDiario(reporte);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar reporte');
+    }
+}
+
+function mostrarReporteDiario(reporte) {
+    const contenedor = document.getElementById('resultadoReporte');
+    
+    let html = `
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5>📊 Reporte del ${reporte.fecha}</h5>
             </div>
-            
-            <div id="admin-contenido" style="margin-top: 20px;">
-                <p style="text-align: center; color: #666;">Selecciona una opción del menú</p>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>${reporte.totales.total_pedidos || 0}</h3>
+                                <p class="mb-0">Pedidos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>$${parseFloat(reporte.totales.total_ventas || 0).toFixed(2)}</h3>
+                                <p class="mb-0">Ventas Totales</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>$${parseFloat(reporte.totales.ticket_promedio || 0).toFixed(2)}</h3>
+                                <p class="mb-0">Ticket Promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6>Por Método de Pago:</h6>
+                <table class="table table-sm">
+                    <thead><tr><th>Método</th><th>Cantidad</th><th>Total</th></tr></thead>
+                    <tbody>
+    `;
+    
+    reporte.por_metodo_pago.forEach(metodo => {
+        html += `
+            <tr>
+                <td>${metodo.metodo_pago}</td>
+                <td>${metodo.cantidad}</td>
+                <td>$${parseFloat(metodo.total).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
+                
+                <h6>Productos Más Vendidos:</h6>
+                <table class="table table-sm">
+                    <thead><tr><th>Producto</th><th>Cantidad</th><th>Total</th></tr></thead>
+                    <tbody>
+    `;
+    
+    reporte.productos_mas_vendidos.forEach(prod => {
+        html += `
+            <tr>
+                <td>${prod.nombre} - ${prod.corte}</td>
+                <td>${prod.cantidad_vendida}</td>
+                <td>$${parseFloat(prod.total_vendido).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
     
-    document.body.appendChild(modal);
+    contenedor.innerHTML = html;
 }
 
-window.cerrarPanelAdmin = function() {
-    const modal = document.getElementById('modal-admin');
-    if (modal) {
-        modal.remove();
+async function generarReporteRango() {
+    const desde = document.getElementById('fechaDesde').value;
+    const hasta = document.getElementById('fechaHasta').value;
+    
+    if (!desde || !hasta) {
+        alert('Debe seleccionar ambas fechas');
+        return;
     }
-};
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/reportes/rango?desde=${desde}&hasta=${hasta}`);
+        const reporte = await response.json();
+        
+        mostrarReporteRango(reporte);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al generar reporte');
+    }
+}
 
-window.volverAlPerfil = function() {
-    cerrarPanelAdmin();
-    // Mostrar panel de usuario
-    panelUsuario.style.display = 'block';
-};
+function mostrarReporteRango(reporte) {
+    const contenedor = document.getElementById('resultadoReporte');
+    
+    let html = `
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5>📈 Reporte desde ${reporte.fecha_desde} hasta ${reporte.fecha_hasta}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>${reporte.totales.total_pedidos || 0}</h3>
+                                <p class="mb-0">Pedidos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>$${parseFloat(reporte.totales.total_ventas || 0).toFixed(2)}</h3>
+                                <p class="mb-0">Ventas Totales</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>$${parseFloat(reporte.totales.ticket_promedio || 0).toFixed(2)}</h3>
+                                <p class="mb-0">Ticket Promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6>Por Método de Pago:</h6>
+                <table class="table table-sm">
+                    <thead><tr><th>Método</th><th>Cantidad</th><th>Total</th></tr></thead>
+                    <tbody>
+    `;
+    
+    reporte.por_metodo_pago.forEach(metodo => {
+        html += `
+            <tr>
+                <td>${metodo.metodo_pago}</td>
+                <td>${metodo.cantidad}</td>
+                <td>$${parseFloat(metodo.total).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
+                
+                <h6>Top 15 Productos Más Vendidos:</h6>
+                <table class="table table-sm">
+                    <thead><tr><th>Producto</th><th>Cantidad</th><th>Total</th></tr></thead>
+                    <tbody>
+    `;
+    
+    reporte.productos_mas_vendidos.forEach(prod => {
+        html += `
+            <tr>
+                <td>${prod.nombre} - ${prod.corte}</td>
+                <td>${prod.cantidad_vendida}</td>
+                <td>$${parseFloat(prod.total_vendido).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    contenedor.innerHTML = html;
+}
 
 // ============================================
 // GESTIÓN DE PRODUCTOS (SOLO ADMIN)
 // ============================================
 
-window.verProductos = async function() {
-    const contenido = document.getElementById('admin-contenido');
-    contenido.innerHTML = '<p style="text-align:center;">Cargando productos...</p>';
-    
-    try {
-        const response = await fetch('/productos');
-        const productos = await response.json();
-        
-        let html = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="color: var(--color-principal);">Gestión de Productos</h3>
-                <button onclick="mostrarFormAgregarProducto()" class="btn-compra">
-                    <i class="fas fa-plus"></i> Agregar Producto
-                </button>
-            </div>
-            
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: var(--color-oscuro); color: white;">
-                            <th style="padding: 10px; text-align: left;">ID</th>
-                            <th style="padding: 10px; text-align: left;">Imagen</th>
-                            <th style="padding: 10px; text-align: left;">Nombre</th>
-                            <th style="padding: 10px; text-align: left;">Corte</th>
-                            <th style="padding: 10px; text-align: right;">Precio</th>
-                            <th style="padding: 10px; text-align: center;">Unidad</th>
-                            <th style="padding: 10px; text-align: center;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-        
-        productos.forEach(p => {
-            html += `
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 10px;">${p.id}</td>
-                    <td style="padding: 10px;">
-                        <img src="/static/img/${p.id}.jpg" 
-                             onerror="this.src='/static/img/default.jpg'" 
-                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
-                    </td>
-                    <td style="padding: 10px;">${p.nombre}</td>
-                    <td style="padding: 10px;">${p.corte}</td>
-                    <td style="padding: 10px; text-align: right; font-weight: bold;">$${parseFloat(p.precio).toFixed(3)}</td>
-                    <td style="padding: 10px; text-align: center;">${p.unidad}</td>
-                    <td style="padding: 10px; text-align: center;">
-                        <button onclick="editarProducto(${p.id}, '${p.nombre}', '${p.corte}', ${p.precio}, '${p.unidad}')" 
-                                class="btn-compra" style="padding: 5px 10px; margin: 2px;">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="eliminarProducto(${p.id}, '${p.nombre}')" 
-                                class="btn-vaciar" style="padding: 5px 10px; margin: 2px;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-        
-        contenido.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error al cargar productos:', error);
-        contenido.innerHTML = '<p style="color:red; text-align:center;">Error al cargar productos</p>';
-    }
-};
-
-window.mostrarFormAgregarProducto = function() {
-    const contenido = document.getElementById('admin-contenido');
-    contenido.innerHTML = `
-        <h3 style="color: var(--color-principal);">Agregar Nuevo Producto</h3>
-        <form id="form-agregar-producto" style="max-width: 500px; margin: 20px auto;">
-            <div class="form-group">
-                <label>Nombre:</label>
-                <input type="text" id="nuevo-nombre" required>
-            </div>
-            <div class="form-group">
-                <label>Corte/Descripción:</label>
-                <input type="text" id="nuevo-corte" required>
-            </div>
-            <div class="form-group">
-                <label>Precio:</label>
-                <input type="number" step="0.001" id="nuevo-precio" required>
-            </div>
-            <div class="form-group">
-                <label>Unidad:</label>
-                <select id="nuevo-unidad" required>
-                    <option value="kg">kg</option>
-                    <option value="unidad">unidad</option>
-                    <option value="docena">docena</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="submit" class="btn-compra" style="flex: 1;">Guardar</button>
-                <button type="button" onclick="verProductos()" class="btn-vaciar" style="flex: 1;">Cancelar</button>
-            </div>
-        </form>
-    `;
-    
-    document.getElementById('form-agregar-producto').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const datos = {
-            nombre: document.getElementById('nuevo-nombre').value,
-            corte: document.getElementById('nuevo-corte').value,
-            precio: parseFloat(document.getElementById('nuevo-precio').value),
-            unidad: document.getElementById('nuevo-unidad').value
-        };
-        
-        try {
-            const response = await fetch('/admin/productos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok) {
-                alert('Producto agregado exitosamente');
-                verProductos();
-            } else {
-                alert(result.error || 'Error al agregar producto');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error de conexión');
-        }
-    });
-};
-
-window.editarProducto = function(id, nombre, corte, precio, unidad) {
-    const contenido = document.getElementById('admin-contenido');
-    contenido.innerHTML = `
-        <h3 style="color: var(--color-principal);">Editar Producto #${id}</h3>
-        <form id="form-editar-producto" style="max-width: 500px; margin: 20px auto;">
-            <div class="form-group">
-                <label>Nombre:</label>
-                <input type="text" id="edit-nombre" value="${nombre}" required>
-            </div>
-            <div class="form-group">
-                <label>Corte/Descripción:</label>
-                <input type="text" id="edit-corte" value="${corte}" required>
-            </div>
-            <div class="form-group">
-                <label>Precio:</label>
-                <input type="number" step="0.001" id="edit-precio" value="${precio}" required>
-            </div>
-            <div class="form-group">
-                <label>Unidad:</label>
-                <select id="edit-unidad" required>
-                    <option value="kg" ${unidad === 'kg' ? 'selected' : ''}>kg</option>
-                    <option value="unidad" ${unidad === 'unidad' ? 'selected' : ''}>unidad</option>
-                    <option value="docena" ${unidad === 'docena' ? 'selected' : ''}>docena</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="submit" class="btn-compra" style="flex: 1;">Guardar Cambios</button>
-                <button type="button" onclick="verProductos()" class="btn-vaciar" style="flex: 1;">Cancelar</button>
-            </div>
-        </form>
-    `;
-    
-    document.getElementById('form-editar-producto').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const datos = {
-            nombre: document.getElementById('edit-nombre').value,
-            corte: document.getElementById('edit-corte').value,
-            precio: parseFloat(document.getElementById('edit-precio').value),
-            unidad: document.getElementById('edit-unidad').value
-        };
-        
-        try {
-            const response = await fetch(`/admin/productos/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok) {
-                alert('Producto actualizado exitosamente');
-                verProductos();
-            } else {
-                alert(result.error || 'Error al actualizar producto');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error de conexión');
-        }
-    });
-};
-
-window.eliminarProducto = async function(id, nombre) {
-    if (!confirm(`¿Estás seguro de eliminar "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
+async function mostrarSeccionProductos() {
+    if (adminActual.rol !== 'admin') {
+        alert('Solo administradores pueden gestionar productos');
         return;
     }
     
-    try {
-        const response = await fetch(`/admin/productos/${id}`, {
-            method: 'DELETE'
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert('Producto eliminado exitosamente');
-            verProductos();
-        } else {
-            alert(result.error || 'Error al eliminar producto');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión');
-    }
-};
+    mostrarSeccion('seccionProductos');
+    // Aquí puedes implementar la gestión de productos
+    alert('Funcionalidad de gestión de productos - Por implementar en admin.html');
+}
 
 // ============================================
-// GESTIÓN DE PEDIDOS (ADMIN Y EMPLEADO)
+// UTILIDADES
 // ============================================
 
-window.verTodosPedidos = async function() {
-    const contenido = document.getElementById('admin-contenido');
-    contenido.innerHTML = '<p style="text-align:center;">Cargando pedidos...</p>';
+function mostrarSeccion(seccionId) {
+    // Ocultar todas las secciones
+    document.querySelectorAll('.seccion-admin').forEach(s => s.classList.add('d-none'));
     
-    try {
-        const response = await fetch('/admin/pedidos');
-        const pedidos = await response.json();
-        
-        let html = `
-            <h3 style="color: var(--color-principal); margin-bottom: 20px;">Todos los Pedidos</h3>
-            <div style="overflow-x: auto;">
-        `;
-        
-        if (pedidos.length === 0) {
-            html += '<p style="text-align:center; color: #666;">No hay pedidos registrados</p>';
-        } else {
-            pedidos.forEach(pedido => {
-                const fecha = new Date(pedido.fecha).toLocaleString('es-AR');
-                const editado = pedido.editado ? '✏️ Editado' : '';
-                
-                html += `
-                    <div style="border: 2px solid ${pedido.estado === 'cancelado' ? '#dc3545' : pedido.estado === 'completado' ? '#28a745' : '#ffc107'}; 
-                                border-radius: 10px; padding: 20px; margin-bottom: 20px; background: white;">
-                        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 10px;">
-                            <div>
-                                <h4 style="margin: 0; color: var(--color-principal);">Pedido #${pedido.id} ${editado}</h4>
-                                <p style="margin: 5px 0;"><strong>Cliente:</strong> ${pedido.nombre} ${pedido.apellido}</p>
-                                <p style="margin: 5px 0;"><strong>Email:</strong> ${pedido.email}</p>
-                                ${pedido.telefono ? `<p style="margin: 5px 0;"><strong>Tel:</strong> ${pedido.telefono}</p>` : ''}
-                                <p style="margin: 5px 0;"><strong>Fecha:</strong> ${fecha}</p>
-                                ${pedido.fecha_edicion ? `<p style="margin: 5px 0; color: #666;"><em>Editado: ${new Date(pedido.fecha_edicion).toLocaleString('es-AR')}</em></p>` : ''}
-                            </div>
-                            <div style="text-align: right;">
-                                <p style="margin: 5px 0; font-size: 1.3em; font-weight: bold;">$${parseFloat(pedido.total).toFixed(3)}</p>
-                                <p style="margin: 5px 0;"><strong>Estado:</strong> <span style="color: ${pedido.estado === 'cancelado' ? '#dc3545' : pedido.estado === 'completado' ? '#28a745' : '#ffc107'};">${pedido.estado.toUpperCase()}</span></p>
-                                <p style="margin: 5px 0;"><strong>Pago:</strong> ${pedido.metodo_pago.toUpperCase()}</p>
-                            </div>
-                        </div>
-                        
-                        <details style="margin-top: 15px;">
-                            <summary style="cursor: pointer; font-weight: bold; color: var(--color-oscuro);">Ver Detalle</summary>
-                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
-                                <thead>
-                                    <tr style="border-bottom: 2px solid #ddd;">
-                                        <th style="text-align: left; padding: 8px;">Producto</th>
-                                        <th style="text-align: right; padding: 8px;">Cantidad</th>
-                                        <th style="text-align: right; padding: 8px;">Precio Unit.</th>
-                                        <th style="text-align: right; padding: 8px;">Subtotal</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${pedido.items.map(item => `
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px;">${item.nombre}</td>
-                                            <td style="text-align: right; padding: 8px;">${parseFloat(item.cantidad).toFixed(2)} ${item.unidad}</td>
-                                            <td style="text-align: right; padding: 8px;">$${parseFloat(item.precio_unitario).toFixed(3)}</td>
-                                            <td style="text-align: right; padding: 8px; font-weight: bold;">$${parseFloat(item.subtotal).toFixed(3)}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </details>
-                        
-                        <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                            <button onclick="reimprimirTicket(${pedido.id}, ${JSON.stringify(pedido).replace(/"/g, '&quot;')})" 
-                                    class="btn-compra" style="flex: 1; min-width: 150px;">
-                                <i class="fas fa-print"></i> Reimprimir Ticket
-                            </button>
-                            ${pedido.estado !== 'cancelado' ? `
-                                <button onclick="editarPedidoAdmin(${pedido.id})" 
-                                        class="btn-compra" style="flex: 1; min-width: 150px; background: var(--color-secundario); color: var(--color-oscuro);">
-                                    <i class="fas fa-edit"></i> Editar Pedido
-                                </button>
-                                <button onclick="cancelarPedidoAdmin(${pedido.id})" 
-                                        class="btn-vaciar" style="flex: 1; min-width: 150px;">
-                                    <i class="fas fa-ban"></i> Cancelar
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-        }
-        
-        html += '</div>';
-        contenido.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error al cargar pedidos:', error);
-        contenido.innerHTML = '<p style="color:red; text-align:center;">Error al cargar pedidos</p>';
+    // Mostrar la sección seleccionada
+    const seccion = document.getElementById(seccionId);
+    if (seccion) {
+        seccion.classList.remove('d-none');
     }
-};
+}
 
-window.reimprimirTicket = function(pedidoId, pedidoData) {
-    // Usar la función generarTicket existente
-    if (typeof generarTicket === 'function') {
-        generarTicket({
-            pedido_id: pedidoData.id,
-            fecha: new Date(pedidoData.fecha).toLocaleString('es-AR'),
-            items: pedidoData.items,
-            total: parseFloat(pedidoData.total),
-            metodo_pago: pedidoData.metodo_pago,
-            cliente: {
-                nombre: pedidoData.nombre,
-                apellido: pedidoData.apellido,
-                email: pedidoData.email,
-                telefono: pedidoData.telefono || ''
-            }
-        });
-    }
-};
+function mostrarSeccionPedidos() {
+    mostrarSeccion('seccionPedidos');
+    cargarPedidos();
+}
 
-window.editarPedidoAdmin = async function(pedidoId) {
-    const nuevoEstado = prompt('Nuevo estado:\n1. pendiente\n2. completado\n3. cancelado\n\nIngresa el número:');
-    
-    const estados = {
-        '1': 'pendiente',
-        '2': 'completado',
-        '3': 'cancelado'
-    };
-    
-    if (!estados[nuevoEstado]) {
-        alert('Opción inválida');
-        return;
+function cerrarSesion() {
+    if (confirm('¿Desea cerrar sesión?')) {
+        localStorage.removeItem('cliente');
+        window.location.href = 'login.html';
     }
-    
-    try {
-        const response = await fetch(`/admin/pedidos/${pedidoId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                estado: estados[nuevoEstado],
-                editado_por: usuarioActual.id
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert('Pedido actualizado exitosamente');
-            verTodosPedidos();
-        } else {
-            alert(result.error || 'Error al actualizar pedido');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión');
-    }
-};
-
-window.cancelarPedidoAdmin = async function(pedidoId) {
-    if (!confirm('¿Estás seguro de cancelar este pedido?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/admin/pedidos/${pedidoId}`, {
-            method: 'DELETE'
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert('Pedido cancelado exitosamente');
-            verTodosPedidos();
-        } else {
-            alert(result.error || 'Error al cancelar pedido');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión');
-    }
-};
+}

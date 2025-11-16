@@ -146,22 +146,23 @@ DROP TABLE IF EXISTS `cierre_caja`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 
--- Tabla de cierres de caja
-CREATE TABLE cierres_caja (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  fecha DATE NOT NULL,
-  usuario_id INT NOT NULL,
-  total_efectivo DECIMAL(10,3) DEFAULT 0,
-  total_tarjeta DECIMAL(10,3) DEFAULT 0,
-  total_transferencia DECIMAL(10,3) DEFAULT 0,
-  total_general DECIMAL(10,3) NOT NULL,
-  cantidad_pedidos INT DEFAULT 0,
-  fecha_hora_cierre TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  observaciones TEXT,
-  FOREIGN KEY (usuario_id) REFERENCES clientes(id),
-  UNIQUE KEY fecha_unica (fecha)
+CREATE TABLE `cierre_caja` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `fecha` date NOT NULL,
+  `usuario_id` int NOT NULL,
+  `total_efectivo` decimal(10,3) DEFAULT '0.000',
+  `total_tarjeta` decimal(10,3) DEFAULT '0.000',
+  `total_transferencia` decimal(10,3) DEFAULT '0.000',
+  `total_general` decimal(10,3) NOT NULL,
+  `cantidad_pedidos` int DEFAULT '0',
+  `fecha_hora_cierre` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `observaciones` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `fecha_unica` (`fecha`),
+  KEY `usuario_id` (`usuario_id`),
+  CONSTRAINT `cierre_caja_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `clientes` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 LOCK TABLES `cierre_caja` WRITE;
 /*!40000 ALTER TABLE `cierre_caja` DISABLE KEYS */;

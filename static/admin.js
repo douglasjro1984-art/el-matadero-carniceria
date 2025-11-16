@@ -24,9 +24,6 @@ function mostrarPanelAdmin() {
             <div style="display: flex; gap: 10px; margin: 20px 0; justify-content: center; flex-wrap: wrap;">
                 ${esAdmin ? '<button onclick="verProductos()" class="btn-compra">📦 Gestionar Productos</button>' : ''}
                 <button onclick="verTodosPedidos()" class="btn-compra">📋 Ver Todos los Pedidos</button>
-                <button onclick="volverAlPerfil()" class="btn-compra" style="background: var(--color-secundario); color: var(--color-oscuro);">
-                    👤 Volver a Mi Perfil
-                </button>
                 <button onclick="cerrarPanelAdmin()" class="btn-vaciar">Cerrar</button>
             </div>
             

@@ -4,6 +4,7 @@ const STORAGE_KEY_USUARIO = 'usuarioMatadero';
 
 // === REFERENCIAS DOM ===
 const btnAuth = document.getElementById('btn-auth');
+const btnPanelHeader = document.getElementById('btn-panel-header');
 const modalAuth = document.getElementById('modal-auth');
 const cerrarAuth = document.querySelector('.cerrar-auth');
 const formLogin = document.getElementById('form-login');

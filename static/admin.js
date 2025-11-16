@@ -18,12 +18,15 @@ function mostrarPanelAdmin() {
         <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
             <span class="cerrar-modal" onclick="cerrarPanelAdmin()">&times;</span>
             <h2 style="color: var(--color-principal); text-align: center;">
-                🔧 Panel de Administración
+                🔧 Panel de Administración - ${usuarioActual.nombre}
             </h2>
             
             <div style="display: flex; gap: 10px; margin: 20px 0; justify-content: center; flex-wrap: wrap;">
                 ${esAdmin ? '<button onclick="verProductos()" class="btn-compra">📦 Gestionar Productos</button>' : ''}
                 <button onclick="verTodosPedidos()" class="btn-compra">📋 Ver Todos los Pedidos</button>
+                <button onclick="volverAlPerfil()" class="btn-compra" style="background: var(--color-secundario); color: var(--color-oscuro);">
+                    👤 Volver a Mi Perfil
+                </button>
                 <button onclick="cerrarPanelAdmin()" class="btn-vaciar">Cerrar</button>
             </div>
             
@@ -41,6 +44,12 @@ window.cerrarPanelAdmin = function() {
     if (modal) {
         modal.remove();
     }
+};
+
+window.volverAlPerfil = function() {
+    cerrarPanelAdmin();
+    // Mostrar panel de usuario
+    panelUsuario.style.display = 'block';
 };
 
 // ============================================

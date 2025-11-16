@@ -137,6 +137,38 @@ LOCK TABLES `detalle_pedidos` WRITE;
 /*!40000 ALTER TABLE `detalle_pedidos` ENABLE KEYS */;
 UNLOCK TABLES;
 
+
+-- ==================================================
+-- TABLA: cierre_caja
+-- ==================================================
+
+DROP TABLE IF EXISTS `cierre_caja`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+
+-- Tabla de cierres de caja
+CREATE TABLE cierres_caja (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  fecha DATE NOT NULL,
+  usuario_id INT NOT NULL,
+  total_efectivo DECIMAL(10,3) DEFAULT 0,
+  total_tarjeta DECIMAL(10,3) DEFAULT 0,
+  total_transferencia DECIMAL(10,3) DEFAULT 0,
+  total_general DECIMAL(10,3) NOT NULL,
+  cantidad_pedidos INT DEFAULT 0,
+  fecha_hora_cierre TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  observaciones TEXT,
+  FOREIGN KEY (usuario_id) REFERENCES clientes(id),
+  UNIQUE KEY fecha_unica (fecha)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+LOCK TABLES `cierre_caja` WRITE;
+/*!40000 ALTER TABLE `cierre_caja` DISABLE KEYS */;
+/*!40000 ALTER TABLE `cierre_caja` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
@@ -146,12 +178,3 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- ==================================================
--- RESUMEN DE CAMBIOS:
--- ==================================================
--- ✅ clientes: Agregado campo 'rol' (cliente/empleado/admin)
--- ✅ clientes: Creado usuario admin (email: admin@elmatadero.com, password: admin123)
--- ✅ pedidos: Agregado campo 'metodo_pago'
--- ✅ pedidos: Agregados campos de edición (editado, fecha_edicion, editado_por)
--- ✅ detalle_pedidos: Campo subtotal ahora es NULL (opcional)
--- ==================================================

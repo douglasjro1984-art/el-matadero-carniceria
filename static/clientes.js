@@ -18,7 +18,7 @@ const authText = document.getElementById('auth-text');
 
 // === EVENTOS MODAL ===
 btnAuth.addEventListener('click', () => {
-    // Si hay usuario logueado, mostrar panel de perfil
+    // Si hay usuario logueado, mostrar/ocultar panel
     if (usuarioActual) {
         if (panelUsuario.style.display === 'block') {
             panelUsuario.style.display = 'none';
@@ -32,15 +32,6 @@ btnAuth.addEventListener('click', () => {
         formRegistro.style.display = 'none';
     }
 });
-
-// === EVENTO: Botón Panel Admin en Header ===
-if (btnPanelHeader) {
-    btnPanelHeader.addEventListener('click', () => {
-        if (typeof mostrarPanelAdmin === 'function') {
-            mostrarPanelAdmin();
-        }
-    });
-}
 
 cerrarAuth.addEventListener('click', () => {
     modalAuth.style.display = 'none';
@@ -69,14 +60,17 @@ mostrarLogin.addEventListener('click', (e) => {
 document.getElementById('registro-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Capturar contraseña y confirmación
     const password = document.getElementById('reg-password').value.trim();
     const passwordConfirm = document.getElementById('reg-password-confirm').value.trim();
 
+    // Validar que las contraseñas coincidan
     if (password !== passwordConfirm) {
         alert('Las contraseñas no coinciden');
         return;
     }
 
+    // Validar longitud mínima de contraseña
     if (password.length < 6) {
         alert('La contraseña debe tener al menos 6 caracteres');
         return;
@@ -88,7 +82,7 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
         email: document.getElementById('reg-email').value.trim(),
         telefono: document.getElementById('reg-telefono').value.trim(),
         direccion: document.getElementById('reg-direccion').value.trim(),
-        password: password
+        password: password  // ✅ AGREGADO
     };
 
     if (!datos.nombre || !datos.apellido || !datos.email) {
@@ -112,13 +106,13 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
                 apellido: datos.apellido,
                 email: datos.email,
                 telefono: datos.telefono,
-                direccion: datos.direccion,
-                rol: 'cliente'
+                direccion: datos.direccion
             };
             actualizarUI();
             modalAuth.style.display = 'none';
             e.target.reset();
             
+            // Mostrar mensaje temporal
             const mensaje = document.createElement('div');
             mensaje.style.cssText = 'position:fixed;top:20px;right:20px;background:#28a745;color:white;padding:15px 25px;border-radius:8px;z-index:9999;box-shadow:0 4px 8px rgba(0,0,0,0.3);font-weight:bold;';
             mensaje.textContent = '¡Registrado con éxito!';
@@ -137,7 +131,6 @@ document.getElementById('registro-form').addEventListener('submit', async (e) =>
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const tipoSeleccionado = document.getElementById('login-tipo').value;
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value.trim();
 
@@ -147,7 +140,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     }
 
     try {
-        const res = await fetch('/clientes/login', {
+        const res = await fetch('/clientes/login', {  // ✅ CORREGIDO: era /clientes/registro
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -156,17 +149,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         const data = await res.json();
 
         if (res.ok) {
-            // Verificar que el rol coincida
-            if (data.cliente.rol !== tipoSeleccionado) {
-                alert(`Este usuario no tiene permisos de ${tipoSeleccionado}. Tu rol es: ${data.cliente.rol}`);
-                return;
-            }
-            
             usuarioActual = data.cliente;
             actualizarUI();
             modalAuth.style.display = 'none';
             e.target.reset();
             
+            // Mostrar mensaje temporal
             const mensaje = document.createElement('div');
             mensaje.style.cssText = 'position:fixed;top:20px;right:20px;background:#28a745;color:white;padding:15px 25px;border-radius:8px;z-index:9999;box-shadow:0 4px 8px rgba(0,0,0,0.3);font-weight:bold;';
             mensaje.textContent = '¡Bienvenido de nuevo, ' + data.cliente.nombre + '!';
@@ -190,11 +178,6 @@ btnCerrarSesion.addEventListener('click', () => {
         authText.textContent = 'Iniciar Sesión';
         btnAuth.querySelector('i').className = 'fas fa-user';
         
-        // Ocultar botón de panel admin
-        if (btnPanelHeader) {
-            btnPanelHeader.style.display = 'none';
-        }
-        
         const mensaje = document.createElement('div');
         mensaje.style.cssText = 'position:fixed;top:20px;right:20px;background:#dc3545;color:white;padding:15px 25px;border-radius:8px;z-index:9999;box-shadow:0 4px 8px rgba(0,0,0,0.3);font-weight:bold;';
         mensaje.textContent = 'Sesión cerrada';
@@ -209,11 +192,14 @@ function actualizarUI() {
         authText.textContent = usuarioActual.nombre;
         btnAuth.querySelector('i').className = 'fas fa-user-check';
         
-        // Mostrar botón panel admin en header si es admin o empleado
+        // Mostrar botón admin si es admin o empleado
+        let botoneraAdmin = '';
         if (usuarioActual.rol === 'admin' || usuarioActual.rol === 'empleado') {
-            if (btnPanelHeader) {
-                btnPanelHeader.style.display = 'inline-block';
-            }
+            botoneraAdmin = `
+                <button id="btn-panel-admin" class="btn-admin" style="margin-top: 15px; width: 100%; background: var(--color-secundario); color: var(--color-oscuro); padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                    <i class="fas fa-cog"></i> Panel Administración
+                </button>
+            `;
         }
         
         infoUsuario.innerHTML = `
@@ -224,15 +210,54 @@ function actualizarUI() {
             <p style="margin: 8px 0;"><strong>📧 Email:</strong> ${usuarioActual.email}</p>
             ${usuarioActual.telefono ? `<p style="margin: 8px 0;"><strong>📱 Tel:</strong> ${usuarioActual.telefono}</p>` : ''}
             ${usuarioActual.direccion ? `<p style="margin: 8px 0;"><strong>📍 Dir:</strong> ${usuarioActual.direccion}</p>` : ''}
+            ${botoneraAdmin}
         `;
         panelUsuario.style.display = 'block';
         localStorage.setItem(STORAGE_KEY_USUARIO, JSON.stringify(usuarioActual));
         
+        // Cerrar panel automáticamente después de 5 segundos
         setTimeout(() => {
             panelUsuario.style.display = 'none';
         }, 5000);
+        
+        // Agregar evento al botón de admin si existe
+        setTimeout(() => {
+            const btnPanelAdmin = document.getElementById('btn-panel-admin');
+            if (btnPanelAdmin) {
+                btnPanelAdmin.addEventListener('click', () => {
+                    panelUsuario.style.display = 'none';
+                    if (typeof mostrarPanelAdmin === 'function') {
+                        mostrarPanelAdmin();
+                    }
+                });
+            }
+        }, 100);
     }
 }
+
+// === CORREGIDO: Evento para mostrar/ocultar panel ===
+document.addEventListener('DOMContentLoaded', () => {
+    // Toggle panel al hacer clic en el botón de usuario
+    btnAuth.addEventListener('click', (e) => {
+        if (usuarioActual) {
+            e.stopPropagation();
+            if (panelUsuario.style.display === 'block') {
+                panelUsuario.style.display = 'none';
+            } else {
+                panelUsuario.style.display = 'block';
+            }
+        }
+    });
+    
+    // Cerrar panel al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (panelUsuario.style.display === 'block' && 
+            !panelUsuario.contains(e.target) && 
+            !btnAuth.contains(e.target)) {
+            panelUsuario.style.display = 'none';
+        }
+    });
+});
 
 // === CARGAR USUARIO AL INICIAR ===
 document.addEventListener('DOMContentLoaded', () => {

@@ -17,9 +17,19 @@ const authText = document.getElementById('auth-text');
 
 // === EVENTOS MODAL ===
 btnAuth.addEventListener('click', () => {
-    modalAuth.style.display = 'block';
-    formLogin.style.display = 'block';
-    formRegistro.style.display = 'none';
+    // Si hay usuario logueado, mostrar/ocultar panel
+    if (usuarioActual) {
+        if (panelUsuario.style.display === 'block') {
+            panelUsuario.style.display = 'none';
+        } else {
+            panelUsuario.style.display = 'block';
+        }
+    } else {
+        // Si no hay usuario, abrir modal de login
+        modalAuth.style.display = 'block';
+        formLogin.style.display = 'block';
+        formRegistro.style.display = 'none';
+    }
 });
 
 cerrarAuth.addEventListener('click', () => {
@@ -160,11 +170,19 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
 // === CERRAR SESIÓN ===
 btnCerrarSesion.addEventListener('click', () => {
-    usuarioActual = null;
-    localStorage.removeItem(STORAGE_KEY_USUARIO);
-    panelUsuario.style.display = 'none';
-    authText.textContent = 'Iniciar Sesión';
-    btnAuth.querySelector('i').className = 'fas fa-user';
+    if (confirm(`¿Cerrar sesión como ${usuarioActual.nombre}?`)) {
+        usuarioActual = null;
+        localStorage.removeItem(STORAGE_KEY_USUARIO);
+        panelUsuario.style.display = 'none';
+        authText.textContent = 'Iniciar Sesión';
+        btnAuth.querySelector('i').className = 'fas fa-user';
+        
+        const mensaje = document.createElement('div');
+        mensaje.style.cssText = 'position:fixed;top:20px;right:20px;background:#dc3545;color:white;padding:15px 25px;border-radius:8px;z-index:9999;box-shadow:0 4px 8px rgba(0,0,0,0.3);font-weight:bold;';
+        mensaje.textContent = 'Sesión cerrada';
+        document.body.appendChild(mensaje);
+        setTimeout(() => mensaje.remove(), 3000);
+    }
 });
 
 // === ACTUALIZAR UI ===
@@ -172,11 +190,26 @@ function actualizarUI() {
     if (usuarioActual) {
         authText.textContent = usuarioActual.nombre;
         btnAuth.querySelector('i').className = 'fas fa-user-check';
+        
+        // Mostrar botón admin si es admin o empleado
+        let botoneraAdmin = '';
+        if (usuarioActual.rol === 'admin' || usuarioActual.rol === 'empleado') {
+            botoneraAdmin = `
+                <button id="btn-panel-admin" class="btn-admin" style="margin-top: 15px; width: 100%; background: var(--color-secundario); color: var(--color-oscuro); padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                    <i class="fas fa-cog"></i> Panel Administración
+                </button>
+            `;
+        }
+        
         infoUsuario.innerHTML = `
-            <p><strong>${usuarioActual.nombre} ${usuarioActual.apellido}</strong></p>
-            <p><em>${usuarioActual.email}</em></p>
-            ${usuarioActual.telefono ? `<p>Tel: ${usuarioActual.telefono}</p>` : ''}
-            ${usuarioActual.direccion ? `<p>Dir: ${usuarioActual.direccion}</p>` : ''}
+            <div style="text-align: center; padding: 10px; background: linear-gradient(135deg, #f5f5f5, #e0e0e0); border-radius: 8px; margin-bottom: 15px;">
+                <p style="font-size: 1.2em; font-weight: bold; margin: 5px 0; color: var(--color-oscuro);">${usuarioActual.nombre} ${usuarioActual.apellido}</p>
+                ${usuarioActual.rol !== 'cliente' ? `<p style="color: var(--color-secundario); font-weight: bold; margin: 5px 0;">🔑 ${usuarioActual.rol.toUpperCase()}</p>` : ''}
+            </div>
+            <p style="margin: 8px 0;"><strong>📧 Email:</strong> ${usuarioActual.email}</p>
+            ${usuarioActual.telefono ? `<p style="margin: 8px 0;"><strong>📱 Tel:</strong> ${usuarioActual.telefono}</p>` : ''}
+            ${usuarioActual.direccion ? `<p style="margin: 8px 0;"><strong>📍 Dir:</strong> ${usuarioActual.direccion}</p>` : ''}
+            ${botoneraAdmin}
         `;
         panelUsuario.style.display = 'block';
         localStorage.setItem(STORAGE_KEY_USUARIO, JSON.stringify(usuarioActual));
@@ -185,6 +218,19 @@ function actualizarUI() {
         setTimeout(() => {
             panelUsuario.style.display = 'none';
         }, 5000);
+        
+        // Agregar evento al botón de admin si existe
+        setTimeout(() => {
+            const btnPanelAdmin = document.getElementById('btn-panel-admin');
+            if (btnPanelAdmin) {
+                btnPanelAdmin.addEventListener('click', () => {
+                    panelUsuario.style.display = 'none';
+                    if (typeof mostrarPanelAdmin === 'function') {
+                        mostrarPanelAdmin();
+                    }
+                });
+            }
+        }, 100);
     }
 }
 

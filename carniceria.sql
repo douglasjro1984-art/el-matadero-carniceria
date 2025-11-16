@@ -111,58 +111,28 @@ LOCK TABLES `pedidos` WRITE;
 UNLOCK TABLES;
 
 -- ==================================================
--- TABLA: detalle_pedidos
+-- TABLA: cierre_caja (Versión Corregida y Simplificada)
 -- ==================================================
 
-DROP TABLE IF EXISTS `detalle_pedidos`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `detalle_pedidos` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `pedido_id` int NOT NULL,
-  `producto_id` int NOT NULL,
-  `cantidad` decimal(10,3) NOT NULL,
-  `precio_unitario` decimal(10,3) NOT NULL,
-  `subtotal` decimal(10,3) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `pedido_id` (`pedido_id`),
-  KEY `producto_id` (`producto_id`),
-  CONSTRAINT `detalle_pedidos_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `detalle_pedidos_ibfk_2` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-LOCK TABLES `detalle_pedidos` WRITE;
-/*!40000 ALTER TABLE `detalle_pedidos` DISABLE KEYS */;
-/*!40000 ALTER TABLE `detalle_pedidos` ENABLE KEYS */;
-UNLOCK TABLES;
-
-
--- ==================================================
--- TABLA: cierre_caja
--- ==================================================
-
+-- 1. Eliminar la tabla si ya existe (usando el nombre correcto)
 DROP TABLE IF EXISTS `cierre_caja`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 
+-- 2. Crear la tabla con el nombre unificado y sintaxis limpia
 CREATE TABLE `cierre_caja` (
   `id` int NOT NULL AUTO_INCREMENT,
   `fecha` date NOT NULL,
   `usuario_id` int NOT NULL,
-  `total_efectivo` decimal(10,3) DEFAULT '0.000',
-  `total_tarjeta` decimal(10,3) DEFAULT '0.000',
-  `total_transferencia` decimal(10,3) DEFAULT '0.000',
+  `total_efectivo` decimal(10,3) DEFAULT 0.000,
+  `total_tarjeta` decimal(10,3) DEFAULT 0.000,
+  `total_transferencia` decimal(10,3) DEFAULT 0.000,
   `total_general` decimal(10,3) NOT NULL,
-  `cantidad_pedidos` int DEFAULT '0',
+  `cantidad_pedidos` int DEFAULT 0,
   `fecha_hora_cierre` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `observaciones` text,
   PRIMARY KEY (`id`),
   UNIQUE KEY `fecha_unica` (`fecha`),
-  KEY `usuario_id` (`usuario_id`),
-  CONSTRAINT `cierre_caja_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `clientes` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_cierre_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `clientes` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 LOCK TABLES `cierre_caja` WRITE;
 /*!40000 ALTER TABLE `cierre_caja` DISABLE KEYS */;

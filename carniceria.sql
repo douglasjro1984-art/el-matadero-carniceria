@@ -114,10 +114,10 @@ UNLOCK TABLES;
 -- TABLA: cierre_caja (Versión Corregida y Simplificada)
 -- ==================================================
 
--- 1. Eliminar la tabla si ya existe (usando el nombre correcto)
+--//-- . Crear la tabla con el nombre unificado y sintaxis limpia
+
 DROP TABLE IF EXISTS `cierre_caja`;
 
--- 2. Crear la tabla con el nombre unificado y sintaxis limpia
 CREATE TABLE `cierre_caja` (
   `id` int NOT NULL AUTO_INCREMENT,
   `fecha` date NOT NULL,
@@ -130,10 +130,8 @@ CREATE TABLE `cierre_caja` (
   `fecha_hora_cierre` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `observaciones` text,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `fecha_unica` (`fecha`),
-  CONSTRAINT `fk_cierre_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `clientes` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `fecha_unica` (`fecha`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
 LOCK TABLES `cierre_caja` WRITE;
 /*!40000 ALTER TABLE `cierre_caja` DISABLE KEYS */;
 /*!40000 ALTER TABLE `cierre_caja` ENABLE KEYS */;
